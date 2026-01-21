@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Map, i128};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Map, i128, Symbol};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -94,12 +94,64 @@ impl CommitmentCoreContract {
 
     /// Settle commitment at maturity
     pub fn settle(e: Env, commitment_id: String) {
-        // TODO: Verify commitment is expired
-        // TODO: Calculate final settlement amount
-        // TODO: Transfer assets back to owner
-        // TODO: Mark commitment as settled
-        // TODO: Call NFT contract to mark NFT as settled
-        // TODO: Emit settlement event
+        // Storage key for commitments: ("commitments", commitment_id)
+        let key = (Symbol::short("commitments"), commitment_id.clone());
+
+        // Retrieve commitment
+        let maybe: Option<Commitment> = e.storage().get(&key);
+        let mut commitment = match maybe {
+            Some(c) => c,
+            None => panic!("Commitment not found"),
+        };
+
+        // Check already settled
+        if commitment.status == String::from_str(&e, "settled") {
+            panic!("Commitment already settled");
+        }
+
+        // Current ledger timestamp
+        let now: u64 = e.ledger().timestamp();
+
+        // Check expiration
+        if now < commitment.expires_at {
+            panic!("Commitment not expired");
+        }
+
+        // Calculate settlement amount: prefer current_value when non-zero
+        let settlement_amount: i128 = if commitment.current_value != 0 {
+            commitment.current_value
+        } else {
+            commitment.amount
+        };
+
+        // Attempt asset transfer from this contract to the owner.
+        // We call the asset contract `transfer` entrypoint with (from, to, amount).
+        // The `from` address is the contract's own address.
+        let from = Address::Contract(e.get_current_contract());
+        let to = commitment.owner.clone();
+
+        // Invoke token transfer; errors will cause a trap which bubbles up as test failure.
+        // Some token contracts expect different signatures; adapt if needed.
+        let _ = e.invoke_contract(
+            &commitment.asset_address,
+            &Symbol::short("transfer"),
+            (from.clone(), to.clone(), settlement_amount),
+        );
+
+        // Mark commitment as settled and update storage
+        commitment.status = String::from_str(&e, "settled");
+        e.storage().set(&key, &commitment);
+
+        // Call NFT contract to mark NFT as settled (if available)
+        // The NFT contract is expected to have a `settle` method accepting token_id: u32
+        let _ = e.invoke_contract(
+            &e.storage().get(&Symbol::short("nft_contract")).unwrap_or(Address::from_string(&String::from_str(&e, ""))),
+            &Symbol::short("settle"),
+            (commitment.nft_token_id,),
+        );
+
+        // Emit event: CommitmentSettled(commitment_id, owner, settlement_amount, timestamp)
+        e.events().publish((Symbol::short("CommitmentSettled"),), (commitment_id, to, settlement_amount, now));
     }
 
     /// Early exit (with penalty)
