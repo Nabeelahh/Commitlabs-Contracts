@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Map, i128};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec, Map};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -48,7 +48,12 @@ impl AttestationEngineContract {
         // TODO: Create attestation record
         // TODO: Update health metrics
         // TODO: Store attestation
-        // TODO: Emit attestation event
+        
+        // Emit attestation event
+        e.events().publish(
+            (symbol_short!("Attest"), commitment_id, verified_by),
+            (attestation_type, true, e.ledger().timestamp()), // Assuming is_compliant=true for now
+        );
     }
 
     /// Get all attestations for a commitment
@@ -85,7 +90,12 @@ impl AttestationEngineContract {
     pub fn record_fees(e: Env, commitment_id: String, fee_amount: i128) {
         // TODO: Update fees_generated in health metrics
         // TODO: Create fee attestation
-        // TODO: Emit fee event
+        
+        // Emit fee event
+        e.events().publish(
+            (symbol_short!("FeeRec"), commitment_id),
+            (fee_amount, e.ledger().timestamp()),
+        );
     }
 
     /// Record drawdown event
@@ -93,7 +103,12 @@ impl AttestationEngineContract {
         // TODO: Update drawdown_percent in health metrics
         // TODO: Check if max_loss_percent is exceeded
         // TODO: Create drawdown attestation
-        // TODO: Emit drawdown event
+        
+        // Emit drawdown event
+        e.events().publish(
+            (symbol_short!("Drawdown"), commitment_id),
+            (drawdown_percent, e.ledger().timestamp()),
+        );
     }
 
     /// Calculate compliance score (0-100)
@@ -104,7 +119,16 @@ impl AttestationEngineContract {
         //   - Fee generation vs expectations
         //   - Drawdown vs limits
         //   - Duration adherence
-        100
+        let score = 100;
+        
+        // Emit compliance score update event
+        e.events().publish(
+            (symbol_short!("ScoreUpd"), commitment_id),
+            (score, e.ledger().timestamp()),
+        );
+        score
     }
 }
+
+mod tests;
 

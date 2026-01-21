@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Map, i128};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec, Map};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -48,9 +48,16 @@ impl CommitmentCoreContract {
         // TODO: Validate rules
         // TODO: Transfer assets from owner to contract
         // TODO: Call NFT contract to mint Commitment NFT
+        let nft_token_id: u32 = 0;
+        let commitment_id = String::from_str(&e, "commitment_id_placeholder");
         // TODO: Store commitment data
-        // TODO: Emit creation event
-        String::from_str(&e, "commitment_id_placeholder")
+        
+        // Emit creation event
+        e.events().publish(
+            (symbol_short!("Created"), commitment_id.clone(), owner.clone()),
+            (amount, rules, nft_token_id, e.ledger().timestamp()),
+        );
+        commitment_id
     }
 
     /// Get commitment details
@@ -81,7 +88,12 @@ impl CommitmentCoreContract {
         // TODO: Verify caller is authorized (allocation contract)
         // TODO: Update current_value
         // TODO: Check if max_loss_percent is violated
-        // TODO: Emit value update event
+        
+        // Emit value update event
+        e.events().publish(
+            (symbol_short!("ValUpd"), commitment_id),
+            (new_value, e.ledger().timestamp()),
+        );
     }
 
     /// Check if commitment rules are violated
@@ -89,26 +101,47 @@ impl CommitmentCoreContract {
         // TODO: Check if max_loss_percent exceeded
         // TODO: Check if duration expired
         // TODO: Check other rule violations
-        false
+        let violated = false;
+        if violated {
+            // Emit violation event
+            e.events().publish(
+                (symbol_short!("Violated"), commitment_id),
+                (symbol_short!("RuleViol"), e.ledger().timestamp()),
+            );
+        }
+        violated
     }
 
     /// Settle commitment at maturity
     pub fn settle(e: Env, commitment_id: String) {
         // TODO: Verify commitment is expired
         // TODO: Calculate final settlement amount
+        let settlement_amount: i128 = 0;
         // TODO: Transfer assets back to owner
         // TODO: Mark commitment as settled
         // TODO: Call NFT contract to mark NFT as settled
-        // TODO: Emit settlement event
+        
+        // Emit settlement event
+        e.events().publish(
+            (symbol_short!("Settled"), commitment_id),
+            (settlement_amount, e.ledger().timestamp()),
+        );
     }
 
     /// Early exit (with penalty)
     pub fn early_exit(e: Env, commitment_id: String, caller: Address) {
         // TODO: Verify caller is owner
         // TODO: Calculate penalty
+        let penalty_amount: i128 = 0;
+        let returned_amount: i128 = 0;
         // TODO: Transfer remaining amount (after penalty) to owner
         // TODO: Mark commitment as early_exit
-        // TODO: Emit early exit event
+        
+        // Emit early exit event
+        e.events().publish(
+            (symbol_short!("EarlyExt"), commitment_id, caller),
+            (penalty_amount, returned_amount, e.ledger().timestamp()),
+        );
     }
 
     /// Allocate liquidity (called by allocation strategy)
@@ -117,7 +150,14 @@ impl CommitmentCoreContract {
         // TODO: Verify commitment is active
         // TODO: Transfer assets to target pool
         // TODO: Record allocation
-        // TODO: Emit allocation event
+        
+        // Emit allocation event
+        e.events().publish(
+            (symbol_short!("Alloc"), commitment_id, target_pool),
+            (amount, e.ledger().timestamp()),
+        );
     }
 }
+
+mod tests;
 

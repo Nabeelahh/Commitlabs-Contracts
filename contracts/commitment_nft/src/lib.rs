@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Map};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec, Map};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -47,11 +47,17 @@ impl CommitmentNFTContract {
         asset_address: Address,
     ) -> u32 {
         // TODO: Generate unique token_id
+        let token_id = 0; // Placeholder token_id
         // TODO: Calculate expires_at from duration_days
         // TODO: Create CommitmentMetadata
         // TODO: Store NFT data
-        // TODO: Emit mint event
-        0 // Placeholder token_id
+        
+        // Emit mint event
+        e.events().publish(
+            (symbol_short!("Mint"), token_id, owner.clone()),
+            (commitment_id, e.ledger().timestamp()),
+        );
+        token_id
     }
 
     /// Get NFT metadata by token_id
@@ -80,7 +86,12 @@ impl CommitmentNFTContract {
         // TODO: Verify ownership
         // TODO: Check if transfer is allowed (not locked)
         // TODO: Update owner
-        // TODO: Emit transfer event
+        
+        // Emit transfer event
+        e.events().publish(
+            (symbol_short!("Transfer"), from, to),
+            (token_id, e.ledger().timestamp()),
+        );
     }
 
     /// Check if NFT is active
@@ -93,7 +104,14 @@ impl CommitmentNFTContract {
     pub fn settle(e: Env, token_id: u32) {
         // TODO: Verify expiration
         // TODO: Mark as inactive
-        // TODO: Emit settle event
+        
+        // Emit settle event
+        e.events().publish(
+            (symbol_short!("Settle"), token_id),
+            e.ledger().timestamp(),
+        );
     }
 }
+
+mod tests;
 
