@@ -235,4 +235,3 @@ impl CommitmentNFTContract {
         storage::get_token_id(&e)
     }
 }
-
