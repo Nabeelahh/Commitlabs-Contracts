@@ -58,10 +58,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Build Rust contracts with Cargo
+      - name: Build Rust contracts with Cargo (WASM)
         run: |
+          # Build all workspace contracts for WASM target
           cargo build --target wasm32v1-none --release
-          echo "✓ Cargo build completed successfully"
+          echo "✓ Cargo WASM build completed successfully"
 
       - name: Build Soroban contracts with Stellar CLI
         run: |
@@ -84,24 +85,22 @@ jobs:
           done
           echo "✓ Stellar CLI build completed"
 
-      - name: Run unit tests
+      - name: Run unit tests (contracts)
         run: |
-          cargo test --workspace --exclude integration_tests
+          # Run tests for all workspace contracts (native target)
+          cargo test --workspace
           echo "✓ Unit tests passed"
 
-      - name: Run integration tests (local)
+      - name: Run integration tests
         run: |
-          cargo test --package integration_tests --lib -- --test-threads=1
+          # Run integration tests from their own directory (separate from workspace)
+          cd tests/integration
+          cargo test
           echo "✓ Integration tests passed"
-
-      - name: Run testnet integration tests
-        if: env.RUN_TESTNET_IT == 'true'
-        run: |
-          cargo test --package integration_tests --lib --features testnet -- --test-threads=1
-          echo "✓ Testnet integration tests passed"
 
       - name: Run performance benchmarks
         run: |
+          mkdir -p benchmarks/results
           echo "Running performance benchmarks..."
           cargo test --workspace --features benchmark --release -- --nocapture 2>&1 | tee benchmarks/results/ci_benchmark_$(date +%Y%m%d_%H%M%S).log || echo "Note: Some benchmarks may have failed, but continuing..."
           echo "✓ Benchmarks completed"

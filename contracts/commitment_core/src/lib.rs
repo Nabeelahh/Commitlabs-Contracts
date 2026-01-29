@@ -21,6 +21,8 @@ pub enum CommitmentError {
     Unauthorized = 9,
     AlreadyInitialized = 10,
     ReentrancyDetected = 11,
+    NotActive = 12,
+    InvalidStatus = 13,
 }
 
 #[contracttype]
@@ -181,10 +183,36 @@ impl CommitmentCoreContract {
 
     /// Generate unique commitment ID
     /// Optimized: Uses counter to create unique ID efficiently
-    fn generate_commitment_id(e: &Env, _counter: u64) -> String {
-        // Use counter for unique ID - more efficient than string concatenation
-        // Format: "commit_" + counter (simplified for gas efficiency)
-        String::from_str(e, "commitment_") // Simplified - counter will be appended in future optimization
+    fn generate_commitment_id(e: &Env, counter: u64) -> String {
+        // OPTIMIZATION: Use counter directly as string to minimize allocations
+        // This is more gas-efficient than string concatenation
+        let mut buf = [0u8; 32];
+        let prefix = b"c_";
+        buf[0] = prefix[0];
+        buf[1] = prefix[1];
+        
+        // Convert counter to string representation
+        let mut n = counter;
+        let mut i = 2;
+        if n == 0 {
+            buf[i] = b'0';
+            i += 1;
+        } else {
+            let mut digits = [0u8; 20];
+            let mut digit_count = 0;
+            while n > 0 {
+                digits[digit_count] = (n % 10) as u8 + b'0';
+                n /= 10;
+                digit_count += 1;
+            }
+            // Reverse digits
+            for j in 0..digit_count {
+                buf[i] = digits[digit_count - 1 - j];
+                i += 1;
+            }
+        }
+        
+        String::from_str(e, core::str::from_utf8(&buf[..i]).unwrap_or("c_0"))
     }
 
     /// Initialize the core commitment contract
@@ -269,30 +297,20 @@ impl CommitmentCoreContract {
         // Validate rules
         Self::validate_rules(&e, &rules);
 
-        // OPTIMIZATION: Read both counters once to minimize storage operations
-        let current_total = e
-            .storage()
-            .instance()
-            .get::<_, u64>(&DataKey::TotalCommitments)
-            .unwrap_or(0);
-        let current_tvl = e
-            .storage()
-            .instance()
-            .get::<_, i128>(&DataKey::TotalValueLocked)
-            .unwrap_or(0);
+        // OPTIMIZATION: Read both counters and NFT contract once to minimize storage operations
+        let (current_total, current_tvl, nft_contract) = {
+            let total = e.storage().instance().get::<_, u64>(&DataKey::TotalCommitments).unwrap_or(0);
+            let tvl = e.storage().instance().get::<_, i128>(&DataKey::TotalValueLocked).unwrap_or(0);
+            let nft = e.storage().instance().get::<_, Address>(&DataKey::NftContract)
+                .unwrap_or_else(|| {
+                    set_reentrancy_guard(&e, false);
+                    panic!("Contract not initialized")
+                });
+            (total, tvl, nft)
+        };
 
         // Generate unique commitment ID using counter
         let commitment_id = Self::generate_commitment_id(&e, current_total);
-
-        // Get NFT contract address
-        let nft_contract = e
-            .storage()
-            .instance()
-            .get::<_, Address>(&DataKey::NftContract)
-            .unwrap_or_else(|| {
-                set_reentrancy_guard(&e, false);
-                panic!("Contract not initialized")
-            });
 
         // CHECKS: Validate commitment doesn't already exist
         if has_commitment(&e, &commitment_id) {
@@ -422,16 +440,39 @@ impl CommitmentCoreContract {
             .unwrap_or_else(|| panic!("Contract not initialized"))
     }
 
-    /// Update commitment value (called by allocation logic)
+    /// Update commitment value (called by allocation logic or oracle-fed keeper).
+    /// Persists new_value to commitment.current_value and updates TotalValueLocked.
     pub fn update_value(e: Env, commitment_id: String, new_value: i128) {
         // Global per-function rate limit (per contract instance)
         let fn_symbol = symbol_short!("upd_val");
         let contract_address = e.current_contract_address();
         RateLimiter::check(&e, &contract_address, &fn_symbol);
 
-        // NOTE: Authorization and value update logic can be extended here.
+        Validation::require_non_negative(new_value);
 
-        // Emit value update event
+        let mut commitment = read_commitment(&e, &commitment_id)
+            .unwrap_or_else(|| panic!("Commitment not found"));
+
+        let active_status = String::from_str(&e, "active");
+        if commitment.status != active_status {
+            panic!("Commitment is not active");
+        }
+
+        let old_value = commitment.current_value;
+        commitment.current_value = new_value;
+        set_commitment(&e, &commitment);
+
+        // Adjust TotalValueLocked: TVL -= old_value, TVL += new_value
+        let current_tvl = e
+            .storage()
+            .instance()
+            .get::<_, i128>(&DataKey::TotalValueLocked)
+            .unwrap_or(0);
+        let new_tvl = current_tvl - old_value + new_value;
+        e.storage()
+            .instance()
+            .set(&DataKey::TotalValueLocked, &new_tvl);
+
         e.events().publish(
             (symbol_short!("ValUpd"), commitment_id),
             (new_value, e.ledger().timestamp()),
@@ -612,10 +653,6 @@ impl CommitmentCoreContract {
         );
     }
 
-    /// Early exit (with penalty)
-    /// 
-    /// # Reentrancy Protection
-    /// Uses checks-effects-interactions pattern with reentrancy guard.
     pub fn early_exit(e: Env, commitment_id: String, caller: Address) {
         // Reentrancy protection
         require_no_reentrancy(&e);
@@ -629,6 +666,7 @@ impl CommitmentCoreContract {
             });
 
         // Verify caller is owner
+        caller.require_auth();
         if commitment.owner != caller {
             set_reentrancy_guard(&e, false);
             panic!("Unauthorized: caller is not the owner");
@@ -646,7 +684,9 @@ impl CommitmentCoreContract {
             SafeMath::penalty_amount(commitment.current_value, commitment.rules.early_exit_penalty);
         let returned_amount = SafeMath::sub(commitment.current_value, penalty_amount);
 
+        // Update commitment status to early_exit
         commitment.status = String::from_str(&e, "early_exit");
+        commitment.current_value = 0; // All value has been distributed
         set_commitment(&e, &commitment);
 
         // Decrease total value locked by full current value (no longer locked)
@@ -664,14 +704,32 @@ impl CommitmentCoreContract {
         // Transfer remaining amount (after penalty) to owner
         let contract_address = e.current_contract_address();
         let token_client = token::Client::new(&e, &commitment.asset_address);
-        token_client.transfer(&contract_address, &commitment.owner, &returned_amount);
+        
+        if returned_amount > 0 {
+            token_client.transfer(&contract_address, &commitment.owner, &returned_amount);
+        }
+
+        // Call NFT contract to update NFT status (mark as inactive/early_exited)
+        let nft_contract = e
+            .storage()
+            .instance()
+            .get::<_, Address>(&DataKey::NftContract)
+            .unwrap_or_else(|| {
+                set_reentrancy_guard(&e, false);
+                panic!("NFT contract not initialized")
+            });
+        
+        // Call settle on NFT to mark it as inactive
+        let mut args = Vec::new(&e);
+        args.push_back(commitment.nft_token_id.into_val(&e));
+        e.invoke_contract::<()>(&nft_contract, &Symbol::new(&e, "settle"), args);
 
         // Clear reentrancy guard
         set_reentrancy_guard(&e, false);
 
-        // Emit early exit event
+        // Emit early exit event with detailed information
         e.events().publish(
-            (symbol_short!("EarlyExt"), commitment_id, caller),
+            (symbol_short!("EarlyExt"), commitment_id.clone(), caller.clone()),
             (penalty_amount, returned_amount, e.ledger().timestamp()),
         );
     }

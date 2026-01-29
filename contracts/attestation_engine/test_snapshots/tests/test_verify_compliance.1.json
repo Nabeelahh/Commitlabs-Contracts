@@ -1,9 +1,10 @@
 {
   "generators": {
-    "address": 5,
+    "address": 6,
     "nonce": 0
   },
   "auth": [
+    [],
     [],
     [],
     []
@@ -21,7 +22,7 @@
       [
         {
           "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
             "key": "ledger_key_contract_instance",
             "durability": "persistent"
           }
@@ -32,7 +33,7 @@
             "data": {
               "contract_data": {
                 "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
                 "key": "ledger_key_contract_instance",
                 "durability": "persistent",
                 "val": {
@@ -50,7 +51,7 @@
                           ]
                         },
                         "val": {
-                          "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                          "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
                         }
                       },
                       {
@@ -60,7 +61,7 @@
                               "symbol": "Commitment"
                             },
                             {
-                              "string": "test_id"
+                              "u32": 1
                             }
                           ]
                         },
@@ -82,7 +83,7 @@
                                 "symbol": "asset_address"
                               },
                               "val": {
-                                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
                               }
                             },
                             {
@@ -90,7 +91,7 @@
                                 "symbol": "commitment_id"
                               },
                               "val": {
-                                "string": "test_id"
+                                "u32": 1
                               }
                             },
                             {
@@ -98,7 +99,7 @@
                                 "symbol": "created_at"
                               },
                               "val": {
-                                "u64": 0
+                                "u64": 1000
                               }
                             },
                             {
@@ -108,7 +109,7 @@
                               "val": {
                                 "i128": {
                                   "hi": 0,
-                                  "lo": 1100
+                                  "lo": 950
                                 }
                               }
                             },
@@ -117,7 +118,7 @@
                                 "symbol": "expires_at"
                               },
                               "val": {
-                                "u64": 2592000
+                                "u64": 2593000
                               }
                             },
                             {
@@ -133,7 +134,7 @@
                                 "symbol": "owner"
                               },
                               "val": {
-                                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                               }
                             },
                             {
@@ -222,20 +223,54 @@
                         "val": {
                           "u64": 0
                         }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
+            "key": "ledger_key_contract_instance",
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
+                "key": "ledger_key_contract_instance",
+                "durability": "persistent",
+                "val": {
+                  "contract_instance": {
+                    "executable": {
+                      "wasm": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                    },
+                    "storage": [
+                      {
+                        "key": {
+                          "symbol": "ADMIN"
+                        },
+                        "val": {
+                          "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
+                        }
                       },
                       {
                         "key": {
-                          "vec": [
-                            {
-                              "symbol": "TotalValueLocked"
-                            }
-                          ]
+                          "symbol": "CORE"
                         },
                         "val": {
-                          "i128": {
-                            "hi": 0,
-                            "lo": 1100
-                          }
+                          "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
                         }
                       }
                     ]
@@ -275,40 +310,7 @@
     {
       "event": {
         "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "ValUpd"
-              },
-              {
-                "string": "test_id"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "i128": {
-                    "hi": 0,
-                    "lo": 1100
-                  }
-                },
-                {
-                  "u64": 0
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
         "type_": "diagnostic",
         "body": {
           "v0": {
@@ -317,14 +319,14 @@
                 "symbol": "fn_call"
               },
               {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
               },
               {
                 "symbol": "get_commitment"
               }
             ],
             "data": {
-              "string": "test_id"
+              "u32": 1
             }
           }
         }
@@ -334,7 +336,7 @@
     {
       "event": {
         "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
         "type_": "diagnostic",
         "body": {
           "v0": {
@@ -364,7 +366,7 @@
                     "symbol": "asset_address"
                   },
                   "val": {
-                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
                   }
                 },
                 {
@@ -372,7 +374,7 @@
                     "symbol": "commitment_id"
                   },
                   "val": {
-                    "string": "test_id"
+                    "u32": 1
                   }
                 },
                 {
@@ -380,7 +382,7 @@
                     "symbol": "created_at"
                   },
                   "val": {
-                    "u64": 0
+                    "u64": 1000
                   }
                 },
                 {
@@ -390,7 +392,7 @@
                   "val": {
                     "i128": {
                       "hi": 0,
-                      "lo": 1100
+                      "lo": 950
                     }
                   }
                 },
@@ -399,7 +401,7 @@
                     "symbol": "expires_at"
                   },
                   "val": {
-                    "u64": 2592000
+                    "u64": 2593000
                   }
                 },
                 {
@@ -415,7 +417,7 @@
                     "symbol": "owner"
                   },
                   "val": {
-                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                   }
                 },
                 {
@@ -488,7 +490,7 @@
     {
       "event": {
         "ext": "v0",
-        "contract_id": null,
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
         "type_": "diagnostic",
         "body": {
           "v0": {
@@ -497,13 +499,15 @@
                 "symbol": "fn_call"
               },
               {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
               },
               {
-                "symbol": "get_total_value_locked"
+                "symbol": "get_commitment"
               }
             ],
-            "data": "void"
+            "data": {
+              "u32": 1
+            }
           }
         }
       },
@@ -512,7 +516,7 @@
     {
       "event": {
         "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
         "type_": "diagnostic",
         "body": {
           "v0": {
@@ -521,14 +525,142 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "get_total_value_locked"
+                "symbol": "get_commitment"
               }
             ],
             "data": {
-              "i128": {
-                "hi": 0,
-                "lo": 1100
-              }
+              "map": [
+                {
+                  "key": {
+                    "symbol": "amount"
+                  },
+                  "val": {
+                    "i128": {
+                      "hi": 0,
+                      "lo": 1000
+                    }
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "asset_address"
+                  },
+                  "val": {
+                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "commitment_id"
+                  },
+                  "val": {
+                    "u32": 1
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "created_at"
+                  },
+                  "val": {
+                    "u64": 1000
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "current_value"
+                  },
+                  "val": {
+                    "i128": {
+                      "hi": 0,
+                      "lo": 950
+                    }
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "expires_at"
+                  },
+                  "val": {
+                    "u64": 2593000
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "nft_token_id"
+                  },
+                  "val": {
+                    "u32": 1
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "owner"
+                  },
+                  "val": {
+                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "rules"
+                  },
+                  "val": {
+                    "map": [
+                      {
+                        "key": {
+                          "symbol": "commitment_type"
+                        },
+                        "val": {
+                          "string": "balanced"
+                        }
+                      },
+                      {
+                        "key": {
+                          "symbol": "duration_days"
+                        },
+                        "val": {
+                          "u32": 30
+                        }
+                      },
+                      {
+                        "key": {
+                          "symbol": "early_exit_penalty"
+                        },
+                        "val": {
+                          "u32": 10
+                        }
+                      },
+                      {
+                        "key": {
+                          "symbol": "max_loss_percent"
+                        },
+                        "val": {
+                          "u32": 10
+                        }
+                      },
+                      {
+                        "key": {
+                          "symbol": "min_fee_threshold"
+                        },
+                        "val": {
+                          "i128": {
+                            "hi": 0,
+                            "lo": 1000
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "status"
+                  },
+                  "val": {
+                    "string": "active"
+                  }
+                }
+              ]
             }
           }
         }

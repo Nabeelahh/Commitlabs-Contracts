@@ -5,7 +5,12 @@ members = [
     "contracts/commitment_core",
     "contracts/attestation_engine",
     "contracts/allocation_logic",
-    "contracts/mock_oracle",
+    "contracts/commitment_interface",
+    "contracts/price_oracle",
+]
+# Note: tests/integration is excluded from workspace to prevent testutils feature
+# from being enabled during WASM builds. Run integration tests separately.
+exclude = [
     "tests/integration",
 ]
 resolver = "2"
